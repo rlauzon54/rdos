@@ -43,27 +43,27 @@ Much of the code is based on a [DeskLink port to Linux](http://www.bitchin100.co
 The protocol is (reverse engineered) documented [here](http://bitchin100.com/wiki/index.php?title=TPDD_Base_Protocol)
 
 Commands:
-Type 00 - Directory Reference - Used by RLIST to list the files, and RSAVE/RLOAD to save and load files.  Option "request previous directory block", and "end directory reference" will not be supported
-Type 01 - Open file - Used by RSAVE/RLOAD to save and load files
-Type 02 - Close file - Used by RSAVE/RLOAD to save and load files
-Type 03 - Read file - Used by RLOAD to load files
-Type 04 - Write file - Used by RSAVE to save files
-Type 05 - Delete file - Used by RMAN to delete files
-Type 06 - Format Disk - Unsupported
-Type 07 - Drive Status - Unsupported
-Type 08 - DME Req - Unsupported
-Type 0C - Drive Condition - Unsupported
-Type 0D - Rename file - Used by RMAN to delete files
-Type 23 - TS-DOS Mystery Command - Unsupported
-Type 31 - TS-DOS Mystery Command - Unsupported
++ Type 00 - Directory Reference - Used by RLIST to list the files, and RSAVE/RLOAD to save and load files.  Option "request previous directory block", and "end directory reference" will not be supported
++ Type 01 - Open file - Used by RSAVE/RLOAD to save and load files
++ Type 02 - Close file - Used by RSAVE/RLOAD to save and load files
++ Type 03 - Read file - Used by RLOAD to load files
++ Type 04 - Write file - Used by RSAVE to save files
++ Type 05 - Delete file - Used by RMAN to delete files
++ Type 06 - Format Disk - Unsupported
++ Type 07 - Drive Status - Unsupported
++ Type 08 - DME Req - Unsupported
++ Type 0C - Drive Condition - Unsupported
++ Type 0D - Rename file - Used by RMAN to delete files
++ Type 23 - TS-DOS Mystery Command - Unsupported
++ Type 31 - TS-DOS Mystery Command - Unsupported
 
 File names were padded, internally, to be 6 bytes, dot, 2 bytes.  This will be removed and will use the full 24 bytes available.
 File name case will NOT be forced to upper case.
 Directories will be supported.
 Checksum will not be supported (since the communications is much better).
 
-RLIST.BA - List the files in the current directory
-RLOAD.BA - Load the file into the Tandy
-RSAVE.BA - Save the file into the SD card
-RMAN.BA - Delete/rename files
++ RLIST.BA - List the files in the current directory
++ RLOAD.BA - Load the file into the Tandy
++ RSAVE.BA - Save the file into the SD card
++ RMAN.BA - Delete/rename files
 
