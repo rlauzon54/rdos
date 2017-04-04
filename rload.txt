@@ -1,0 +1,43 @@
+10 rem rload - Get file from Ron Disk
+20 maxfiles = 3
+30 input "What file to get?",f$
+40 input "What to name it here?",l$
+50 open "com:98N1D" for output as #1
+60 open "com:98N1D" for input as #2
+70 open l$ for output as #3
+80 reference file
+90 r$="ZZ" +chr$(0)+chr$(26)+f$+space$(24-len(f$))+"F"+chr$(0)
+100 print #1,d$;
+110 c$=input$(1,2)
+120 if asc(c$) <> 17 then print "Invalid response code (ref)":goto 390
+130 c$=input$(1,2)
+140 l=asc(c$)
+150 q$=input$(l,2)
+159 rem open file
+160 r$="ZZ" +chr$(1)+chr$(1)+chr$(3)
+170 print #1,d$;
+180 c$=input$(1,2)
+190 if asc(c$) <> 18 then print "Invalid response code (open)":goto 390
+200 c$=input$(1,2)
+210 if asc(c$) <> 0 then print "Error opening file:",asc(c$):goto 390
+219 rem Read file
+220 r$="ZZ" +chr$(3)+chr$(0)
+230 print #1,d$;
+240 c$=input$(1,2)
+250 if asc(c$) <> 16 then print "Invalid response code (read)":goto 390
+260 c$=input$(1,2)
+270 l=asc(c$)
+280 if l = 0 goto close file
+290 q$=input$(l,2)
+300 print #3,q$;
+310 if l < 128 goto 190
+320 goto 220
+329 rem close file
+330 r$="ZZ" +chr$(2)+chr$(0)
+340 print #1,d$;
+350 c$=input$(1,2)
+360 if asc(c$) <> 18 then print "Invalid response code (close)":goto 390
+370 c$=input$(1,2)
+380 if asc(c$) <> 0 then print "Error closing file:",asc(c$)
+390 close #1:close #2:close #3:end
+
