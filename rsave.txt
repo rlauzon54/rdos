@@ -1,20 +1,42 @@
-10 rem rlist - Get directory list from the Ron Drive
-20 maxfiles = 2
-30 open "com:98N1D" for output as #1
-40 open "com:98N1D" for input as #2
-50 r$="ZZ" +chr$(0)+chr$(26)+space$(24)+"F"+chr$(1)
-60 print #1,d$;
-70 c$=input$(1,2)
-80 if asc(c$) <> 17 then print "Invalid response code":goto 190
-90 c$=input$(1,2)
-100 l=asc(c$)
-110 q$=input$(l,2)
-120 f$=mid$(q$,1,24)
-130 a$=mid$(25,1)
-140 if asc(mid$(q$,1,1)) = 0 then goto 190
-150 print a$; " " ;f$
-160 r$="ZZ" +chr$(0)+chr$(26)+space$(24)+"F"+chr$(2)
+10 rem rload - Save file to Ron Disk
+20 maxfiles = 3
+30 input "What file to save?",l$
+40 input "What to name it on disk?",f$
+50 open "com:98N1D" for output as #1
+60 open "com:98N1D" for input as #2
+80 rem reference file
+90 r$="ZZ" +chr$(0)+chr$(26)+f$+space$(24-len(f$))+"F"+chr$(0)
+100 print #1,d$;
+110 c$=input$(1,2)
+120 if asc(c$) <> 17 then print "Invalid response code (ref)":goto 385
+130 c$=input$(1,2)
+140 l=asc(c$)
+150 q$=input$(l,2)
+159 rem open file for write
+160 r$="ZZ" +chr$(1)+chr$(1)+chr$(1)
 170 print #1,d$;
-180 goto 70
-190 close #1:close #2:end
+180 c$=input$(1,2)
+190 if asc(c$) <> 18 then print "Invalid response code (open)":goto 385
+200 c$=input$(1,2):c$=input$(1,2)
+210 if asc(c$) <> 0 then print "Error opening file:",asc(c$):goto 385
+215 open l$ for input as #3
+219 rem Read file
+220 q$=input(128,3)
+225 if len(q$) = 0 goto 330
+230 r$="ZZ" +chr$(4)+chr$(len(q$))+q$
+240 print #1,d$;
+250 c$=input$(1,2)
+260 if asc(c$) <> 18 then print "Invalid response code (write)":goto 390
+260 c$=input$(1,2):c$=input$(1,2)
+270 if asc(c$) <> 0 then print "Error writing file:",asc(c$):goto 385
+310 if len(q$) < 128 then 330 else 220
+329 rem close file
+330 r$="ZZ" +chr$(2)+chr$(0)
+340 print #1,d$;
+350 c$=input$(1,2)
+360 if asc(c$) <> 18 then print "Invalid response code (close)":goto 390
+370 c$=input$(1,2)
+380 if asc(c$) <> 0 then print "Error closing file:",asc(c$)
+385 close #3
+390 close #1:close #2:end
 
