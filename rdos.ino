@@ -136,28 +136,30 @@ void loop() {
         
       case got_command_type: // we got the command type
         length = mySerial.read(); // read the data length
-        state = getting_data;
+        if (length > 0) {
+          state = getting_data;
+        } else {
+          state = processing_command; // indicate that we got all the information we need to process the command
+        }
         DEBUG_PRINT("got length:");
         DEBUG_PRINTLN1(length,HEX);
         bufpos=0;
         break;
       
       case getting_data: // we have a length
-        // Did we get all the data?
+        // Get the next char and put it away
+        data[bufpos++] = mySerial.read();
+        DEBUG_PRINT("Got byte ");
+        DEBUG_PRINT(bufpos);
+        DEBUG_PRINT(" of ");
+        DEBUG_PRINT(length);
+        DEBUG_PRINT(":");
+        debugChar(data[bufpos-1]);
+        DEBUG_PRINTLN(" ");
+
         if (bufpos >= length) {
           // yes
           state = processing_command; // indicate that we got all the information we need to process the command
-        }
-        else { // Still reading
-          // Get the next char and put it away
-          data[bufpos++] = mySerial.read();
-          DEBUG_PRINT("Got byte ");
-          DEBUG_PRINT(bufpos);
-          DEBUG_PRINT(" of ");
-          DEBUG_PRINT(length);
-          DEBUG_PRINT(":");
-          debugChar(data[bufpos-1]);
-          DEBUG_PRINTLN(" ");
         }
         break;
                 
@@ -182,7 +184,7 @@ void loop() {
     DEBUG_PRINT("Processing command type = ");
     DEBUG_PRINT1(command_type,HEX);
     DEBUG_PRINT(" length = ");
-    DEBUG_PRINT1(length,HEX);
+    DEBUG_PRINTLN1(length,HEX);
 
     // Command type > 0x40 means that the client wants to access the second bank on the TPDD2.
     // We don't have banks, so just strip it off.
@@ -389,7 +391,7 @@ void directory_ref_return(char *file_name, int file_size)
   // Send the data back
   command_type = 0x11;
   length = 0x1C;
-  send_data(command_type,data,28,calc_sum ());
+  send_data(command_type,data,28);
 }
 
 void open_file(int omode)
@@ -481,7 +483,7 @@ void read_file() {
   length = selected_file.read(data, 128);
 
   // Calculate the check sum of the message
-  send_data(command_type, data, length, calc_sum());
+  send_data(command_type, data, length);
 }
 
 void write_file() {
@@ -574,7 +576,7 @@ void debugChar(unsigned char data_char) {
   DEBUG_PRINT(") ");  
 }
 
-void send_data(unsigned char return_type, unsigned char data[], int length, int checksum) {
+void send_data(unsigned char return_type, unsigned char data[], int length) {
   // We are ready to send
   DEBUG_PRINT("0x");
   mySerial.write(return_type);
@@ -597,11 +599,6 @@ void send_data(unsigned char return_type, unsigned char data[], int length, int 
     }
     DEBUG_PRINT(") ");
   }
-
-  DEBUG_PRINT("0x");
-  mySerial.write(checksum);
-  DEBUG_PRINT1(checksum,HEX);
-  DEBUG_PRINTLN("()");
 }
 
 void normal_return(unsigned char type)
@@ -610,7 +607,7 @@ void normal_return(unsigned char type)
   length = 0x01;
   data[0] = type;
   
-  send_data(command_type, data, length, calc_sum());
+  send_data(command_type, data, length);
 }
 
 void dump_data() {
