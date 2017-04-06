@@ -71,7 +71,7 @@ void setup() {
   }
   
   // set the data rate for the SoftwareSerial port
-  mySerial.begin(9600); //19200);
+  mySerial.begin(19200);
   bufpos = 0;
   timeout = 0;
   
@@ -282,12 +282,12 @@ void pick_file() {
   if (! selected_file) {
     selected_file_size = NO_FILE;  // Indicate that we didn't find the file
     selected_file_open = 0;
-    directory_ref_return(NULL,0);
+    directory_ref_return(NULL,0,false);
   }
   else { // the file exists
     selected_file_size = selected_file.size();
     selected_file_open = 1;
-    directory_ref_return(filename,selected_file_size);
+    directory_ref_return(filename,selected_file_size,selected_file.isDirectory());
   }
 }
 
@@ -310,11 +310,11 @@ void get_first_directory_entry() {
   // If there was no file, return a no file
   if (! entry) {
     // blank file name is "no files"
-    directory_ref_return (NULL, 0);
+    directory_ref_return (NULL, 0, false);
     DEBUG_PRINTLN("No first file");
   }
   else { // there was a file, return the information about the file
-    directory_ref_return (entry.name(), entry.size());
+    directory_ref_return (entry.name(), entry.size(), entry.isDirectory());
     strcpy(filename,entry.name()); // Remember for get_previous call
     entry.close();
     DEBUG_PRINT("First file:");
@@ -328,7 +328,7 @@ void get_next_directory_entry() {
 
   // If we never did a get_first, we shouldn't be able to do a get next
   if (! selected_file_open) {
-    directory_ref_return (NULL, 0); // return no file
+    directory_ref_return (NULL, 0,false); // return no file
     Serial.println("Next dir: dir not open");
     return;
   }
@@ -339,11 +339,11 @@ void get_next_directory_entry() {
   // If there wasn't one, return no files
   if (! entry) {
     // blank file name is "no files"
-    directory_ref_return (NULL, 0);
+    directory_ref_return (NULL, 0,false);
     DEBUG_PRINTLN("Next dir: no more files");
   }
   else { // there was a file, return the information about the file
-    directory_ref_return (entry.name(), entry.size());
+    directory_ref_return (entry.name(), entry.size(), entry.isDirectory());
     strcpy(filename,entry.name()); // Remember for get_previous call
     entry.close();
     DEBUG_PRINT("Next file:");
@@ -351,7 +351,7 @@ void get_next_directory_entry() {
   }
 }
 
-void directory_ref_return(char *file_name, int file_size)
+void directory_ref_return(char *file_name, int file_size, bool isDirectory)
 {
   unsigned short size;
   unsigned char *dotp;
@@ -367,14 +367,18 @@ void directory_ref_return(char *file_name, int file_size)
     // Blank out the file name
     memset (data, ' ', 24);
 
-    // Copy the file name to the buffer, upper case it
+    // Copy the file name to the buffer
     for (i = 0; i < min (strlen ((char *)file_name), 24); i++)
     {
       data[i] = file_name[i];
     }
 
     // Attribute = 'F'
-    data[24] = 'F';
+    if (isDirectory) {
+      data[24] = 'D';
+    } else {
+      data[24] = 'F';
+    }
 
     size = file_size;
 
@@ -588,6 +592,20 @@ void send_data(unsigned char return_type, unsigned char data[], int length) {
   DEBUG_PRINT1(length,HEX);
   DEBUG_PRINT("() ");
   
+  for(int i=0; i < length; i++) {
+    mySerial.write(data[i]);
+    DEBUG_PRINT("0x");
+    DEBUG_PRINT1(data[i],HEX);
+    
+    DEBUG_PRINT("(");
+    if (data[i] > 31 && data[i] < 127) {
+      DEBUG_PRINT((char)data[i]);
+    }
+    DEBUG_PRINT(") ");
+  }
+}
+
+void alt_send_data(unsigned char data[], int length) {
   for(int i=0; i < length; i++) {
     mySerial.write(data[i]);
     DEBUG_PRINT("0x");

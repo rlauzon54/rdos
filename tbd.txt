@@ -1,0 +1,21 @@
+TBD
+
+3. Save/Load binary (.ba) files.
+  - NM error when opening the file for output
+  - FC error when renameing the file to .BA
+  - Bit stopper.
+  
+5. Boot button.
+  - need button and hardware time
+
+Need SD card reader
+4. Verify that the files that appear on the SD card are the same as sent/received.
+7. Research directory support.
+
+Phase 2
+6. "Compress" client programs.
+8. Directory support.
+
+
+1. Add progress bar to rsave and rload. - Success
+2. Move speed to 19200 - Success

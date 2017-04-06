@@ -1,7 +1,7 @@
 10 REM rlist - Get directory list from the Ron Drive
 20 MAXFILES = 2
-30 OPEN "com:88N1D" FOR OUTPUT AS #1
-40 OPEN "com:88N1D" FOR INPUT AS #2
+30 OPEN "com:98N1D" FOR OUTPUT AS #1
+40 OPEN "com:98N1D" FOR INPUT AS #2
 50 R$="ZZ" +CHR$(0)+CHR$(26)+SPACE$(24)+"F"+CHR$(1)
 60 PRINT #1,R$;
 70 C$=INPUT$(1,2)

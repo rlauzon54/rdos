@@ -1,9 +1,9 @@
 10 REM rload - Get file from Ron Disk
 20 MAXFILES = 3
-30 INPUT "What file to get from drive?";F$
-40 INPUT "What to name it Tandy?";L$
-50 OPEN "com:88N1D" FOR OUTPUT AS #1
-60 OPEN "com:88N1D" FOR INPUT AS #2
+30 INPUT "What file to get from drive";F$
+40 INPUT "What to name it Tandy";L$
+50 OPEN "com:98N1D" FOR OUTPUT AS #1
+60 OPEN "com:98N1D" FOR INPUT AS #2
 80 REM reference file
 90 R$="ZZ" +CHR$(0)+CHR$(26)+F$+SPACE$(24-LEN(F$))+"F"+CHR$(0)
 100 PRINT #1,R$;:print ".";

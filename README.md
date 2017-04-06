@@ -5,23 +5,23 @@ This is based off my failed project “Arduino-tpdd”.
 
 The projects would not work with the pre-existing clients (TS-DOS or Teeny).  But it would work with the small BASIC test programs that I created.
 
-So I decided to write my own client(s) to communicate with my project.  This would not offer the full functionality of TS-DOS, but it will allow someone to "boot" the system from the Arduino, save and load files, and, maybe, do some renaming, deleting.
+So I decided to write my own client(s) to communicate with my project.  This would not offer the full functionality of TS-DOS, but it will allow someone to "boot" the "dos" from the Arduino, save and load files, list files, rename, and delete.  I think I can add directory support, but that's outside of scope right now.
 
 # Hardware explanation
 
-Our base is a microcontroller.  I needed more memory than the Arduino Uno, so I went with the Arduino Mega to get enough SRAM.  The SD shield plus SoftwareSerial libraries just wouldn't fit in the Uno's small memory.
+The base is an Arduino microcontroller.  I needed more memory than the Arduino Uno, so I went with the Arduino Mega to get enough SRAM.  The SD shield plus SoftwareSerial libraries just wouldn't fit in the Uno's small memory.
 
 The microSD shield was a no-brainer.  The only thing with that is that I had to solder the SPI headers on since the microSD shield was made for the Uno and the usual pin outs were not compatible with the Mega.  The SPI header, though, lined up. [MicroSD Shield](https://www.sparkfun.com/products/12761)
 
 The biggest pain was the RS-232 shifter.  RS-232 operates from 3.3V to 12V.  So we need something to 1. shift DOWN the voltage (because sending more than 5V down the Arduino's TTL lines would fry it) and 2. to shift UP the TTL voltage to something that my T102 would like to see.  After a few failures, I went with the [RS232 to 5V TTL Converter](http://www.serialcomm.com/serial_rs232_converters/rs232_rs485_to_ttl_converters/rs232_to_5v_ttl_converter/rs232_to_5v_ttl.product_general_info.aspx)
 
+This shifter worked nice and did the hardware flow control cross over for me, so I could use a standard through 9-25 pin serial cable.  No Frankenstein cable.
 
 Arduino pins used:
 * 7 - Drive activity light
 * Digital ground - Drive activity light (gnd)
 * 62 (A8) - Shifter TX
 * 63 (A9) - Shifter RX
-* Analog 5V and ground for the power for the shifter.
 * SPI header for SD shield
 * TBA button to "boot" RLOAD to the Tandy using LOAD "COM:98N1D
 
@@ -42,8 +42,8 @@ So, since 10-13 and 50-53 are unavailable, I had to put the shifter on pins 62 a
 Much of the code is based on a [DeskLink port to Linux](http://www.bitchin100.com/).
 The protocol is (reverse engineered) documented [here](http://bitchin100.com/wiki/index.php?title=TPDD_Base_Protocol)
 
-Commands:
-+ Type 00 - Directory Reference - Used by RLIST to list the files, and RSAVE/RLOAD to save and load files.  Option "request previous directory block", and "end directory reference" will not be supported
+Commands supported:
++ Type 00 - Directory Reference - Used by RLIST to list the files, and RSAVE/RLOAD to save and load files.  Options 3 and 4 - "request previous directory block", and "end directory reference" - are not be supported.
 + Type 01 - Open file - Used by RSAVE/RLOAD to save and load files
 + Type 02 - Close file - Used by RSAVE/RLOAD to save and load files
 + Type 03 - Read file - Used by RLOAD to load files
@@ -58,12 +58,16 @@ Commands:
 + Type 31 - TS-DOS Mystery Command - Unsupported
 
 File names were padded, internally, to be 6 bytes, dot, 2 bytes.  This will be removed and will use the full 24 bytes available.
-File name case will NOT be forced to upper case.
-Directories will be supported.
-Checksum will not be supported (since the communications is much better).
+File name will NOT be forced to upper case on the Arduino side.
+Checksum will not be supported (since the communications is much better, it's no longer needed).
 
+Client programs:
 + RLIST.BA - List the files in the current directory
 + RLOAD.BA - Load the file into the Tandy
 + RSAVE.BA - Save the file into the SD card
-+ RMAN.BA - Delete/rename files
++ RUTIL.BA - Delete/rename files - TBA
++ RCWD.BA - Change/display current working directory - TBA
+
+Notes:
+In RSAVE, I only send 60 bytes of the file at a time.  The Tandy seems to not want to send more than that.
 
