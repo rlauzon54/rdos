@@ -1,0 +1,47 @@
+10 REM rlist - Utilities for the Ron Drive
+20 MAXFILES = 2
+30 PRINT "1) Rename file on disk":PRINT "2) Delete file on disk":PRINT "3) Change directory on disk"
+40 INPUT "Option:";O
+50 IF O = 1 THEN 90
+60 IF O = 2 THEN 180
+70 IF O = 3 THEN 240
+80 GOTO 30
+90 REM rename file
+100 INPUT "Old name";F$
+110 INPUT "New name";N$
+120 GOSUB 400:GOSUB 440
+140 R$="ZZ" +CHR$(13)+CHR$(25)+N$+SPACE$(24-LEN(N$))+"F"
+150 PRINT #1,R$;
+160 GOSUB 520: GOTO 990
+170 REM Delete file
+180 INPUT "File to delete";F$
+190 GOSUB 400:GOSUB 440
+200 R$="ZZ" +CHR$(5)+CHR$(0)
+210 PRINT #1,R$;
+220 GOSUB 520: GOTO 990
+230 REM cwd
+240 input "Subdirectory to change to ('..' for one dir up)";f$
+250 R$="ZZ" +CHR$(0)+CHR$(26)+F$+SPACE$(24-LEN(F$))+"D"+CHR$(3)
+260 gosub 400
+270 PRINT #1,R$;
+280 gosub 520: GOTO 990
+399 REM open files
+400 OPEN "com:98N1D" FOR OUTPUT AS #1
+410 OPEN "com:98N1D" FOR INPUT AS #2
+420 RETURN
+430 REM reference file
+440 R$="ZZ" +CHR$(0)+CHR$(26)+F$+SPACE$(24-LEN(F$))+"F"+CHR$(0)
+450 PRINT #1,R$;
+460 C$=INPUT$(1,2)
+470 IF ASC(C$) <> 17 THEN PRINT "Invalid response code (ref)":GOTO 990
+480 C$=INPUT$(1,2)
+490 L=ASC(C$)
+500 Q$=INPUT$(L,2):Q$=""
+510 RETURN
+520 REM process return
+530 C$=INPUT$(1,2)
+540 IF ASC(C$) <> 18 THEN PRINT "Invalid response code (open)":GOTO 990
+550 C$=INPUT$(1,2):C$=INPUT$(1,2)
+560 IF ASC(C$) <> 0 THEN PRINT "Error:",ASC(C$):GOTO 990
+570 RETURN
+990 CLOSE #1:CLOSE #2:END

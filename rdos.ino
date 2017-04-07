@@ -6,17 +6,20 @@
 
 // Hard drive activity light on pin 7
 #define HDD_IND 7
+#define BOOT_BUTTON A4
 
 #define NO_FILE 75535
 
 // Set the serial port to be on 62,63 (A8,A9 pins)
 SoftwareSerial mySerial(62, 63); // RX, TX
 
+// Display debug output
 #define DEBUG_PRINT(x) Serial.print(x)
 #define DEBUG_PRINT1(x,y) Serial.print(x,y)
 #define DEBUG_PRINTLN(x) Serial.println(x)
 #define DEBUG_PRINTLN1(x,y) Serial.println(x,y)
 
+// Do not display debug output
 //#define DEBUG_PRINT(x) 
 //#define DEBUG_PRINT1(x,y)
 //#define DEBUG_PRINTLN(x) 
@@ -28,7 +31,9 @@ int bufpos;
 int command_type;
 int length;
 int checksum;
+char cwd[255] = "/";
 
+char pathname[255];
 char filename[25];
 File selected_file;
 int selected_file_open;
@@ -53,6 +58,9 @@ void setup() {
   
   // Set the hard drive light pin
   pinMode(HDD_IND,OUTPUT);
+  
+  // Set up boot button
+  pinMode(BOOT_BUTTON,INPUT_PULLUP);
   
   // Note that even if it's not used as the CS pin, the hardware SS pin 
   // (53 on the Mega) must be left as an output or the SD library 
@@ -87,6 +95,7 @@ void setup() {
 }
 
 void loop() {
+  
   // If there's data available
   if (mySerial.available()) {
     timeout = 0;
@@ -162,7 +171,7 @@ void loop() {
           state = processing_command; // indicate that we got all the information we need to process the command
         }
         break;
-                
+                        
     } // switch
   } else {
     // We haven't seen data in a long time, timeout.
@@ -173,6 +182,17 @@ void loop() {
         timeout =0;
         state=initial_state;
         digitalWrite(HDD_IND,LOW);  // turn the drive indicator off
+      }
+    }
+
+    // If we aren't receiving data
+    if (state == initial_state) {
+      // Check for the boot button
+      if (digitalRead(BOOT_BUTTON) != HIGH) {
+        digitalWrite(HDD_IND,HIGH);
+        boot_sequence();
+        digitalWrite(HDD_IND,LOW);
+        state == initial_state;
       }
     }
   }
@@ -244,6 +264,10 @@ void process_directory_command() {
         get_next_directory_entry();
         break;
 
+    case 0x03: /* Change directory */
+        change_directory();
+        break;
+        
     default:
         Serial.print("Unknown directory command:");
         Serial.println(search_form,HEX);
@@ -252,7 +276,7 @@ void process_directory_command() {
 }
 
 void pick_file() {
-  Serial.println("Pick file for open/delete");
+  DEBUG_PRINTLN("Pick file for open/delete");
     
   // Get the file from the input
   memcpy(filename,data,24);
@@ -263,20 +287,13 @@ void pick_file() {
     filename[i] = 0;
   }
 
-  char *dot;
-  char *p;
-  /* Remove spaces between base and dot */
-  dot = strchr((char *)filename,'.');
-  if(dot != NULL) {
-    for(p=dot-1;*p==' ';p--);
-      memmove(p+1,dot,strlen((char *)dot)+1);
-  }
-  
+  strcpy(pathname,cwd);
+  strcat(pathname,filename);
   DEBUG_PRINT("Picked file:");
-  DEBUG_PRINTLN(filename);
+  DEBUG_PRINTLN(pathname);
   
   // Open file
-  selected_file = SD.open(filename);
+  selected_file = SD.open(pathname);
   
   // If the file doesn't exist
   if (! selected_file) {
@@ -292,7 +309,7 @@ void pick_file() {
 }
 
 void get_first_directory_entry() {
-  Serial.println("Get first directory block");
+  DEBUG_PRINTLN("Get first directory block");
 
   // If the directory is still open, close it
   if (selected_file_open) {
@@ -301,8 +318,9 @@ void get_first_directory_entry() {
   }
   
   // Open the root directory of the card
-  selected_file = SD.open("/");
+  selected_file = SD.open(cwd);
   selected_file_open = 1;
+  selected_file.rewindDirectory();
   
   // Get the first file
   File entry =  selected_file.openNextFile();
@@ -321,6 +339,70 @@ void get_first_directory_entry() {
     DEBUG_PRINTLN(filename);
   }
 
+}
+
+void change_directory() {
+  DEBUG_PRINTLN("Change directory");
+
+  // Get the file from the input
+  memcpy(filename,data,24);
+  filename[24]=0;
+  
+  // Remove trailing spaces
+  for(int i=23; i > 0 && filename[i] == ' '; i--) {
+    filename[i] = 0;
+  }
+
+  // If the directory is still open, close it
+  if (selected_file_open) {
+    selected_file.close();
+    selected_file_open = 0;
+  }
+
+  // Are we going up one dir?
+  if (filename[0] == '.' && filename[1] == '.') {
+    // Are we below the root directory?
+    if (strlen(cwd) > 1) {
+      cwd[strlen(cwd)-1] = 0;
+      // Zero out string until we find the last "/"
+      for(int i = strlen(cwd); i >0 && cwd[i] != '/'; i--) {
+        cwd[i] = 0;
+      }
+    }
+    
+    if (strlen(cwd) < 1) {
+      cwd[0] = '/';
+      cwd[1] = 0;
+    }
+  } else {
+    // If the resulting directory is too long, error
+    if (strlen(cwd) + strlen(filename) +1 > 255) {
+      normal_return (0x31);
+    }
+    // Add the new directory
+    strcat(cwd,filename);
+    strcat(cwd,"/");
+  }
+  
+  DEBUG_PRINT("New directory:");
+  DEBUG_PRINTLN(cwd);
+  
+  // Open the directory
+  selected_file = SD.open(cwd);
+
+  // If the new "directory" is not a directory, error
+  if (! selected_file.isDirectory()) {
+    cwd[strlen(cwd)-1] = 0;
+    // Zero out string until we find the last "/"
+    for(int i = strlen(cwd); i >0 && cwd[i] != '/'; i--) {
+      cwd[i] = 0;
+    }
+    normal_return (0x31);
+  }
+  selected_file.close();  
+  selected_file_open = 0;
+
+  normal_return (0x00);
 }
 
 void get_next_directory_entry() {
@@ -409,26 +491,29 @@ void open_file(int omode)
     selected_file_open = 0;
   }
   
+  strcpy(pathname,cwd);
+  strcat(pathname,filename);
+
   switch(omode) {
     case 0x01:  /* New file for my_write */
       DEBUG_PRINTLN("New file for write");
       
       // if the file exists, remove it
-      if (SD.exists(filename)) {
+      if (SD.exists(pathname)) {
         DEBUG_PRINTLN("Removing old file");
-        SD.remove(filename);
+        SD.remove(pathname);
       }
       // Fall through
       
     case 0x02:  /* existing file for append */
       DEBUG_PRINTLN("Opening file for append");
-      selected_file = SD.open(filename,FILE_WRITE);
+      selected_file = SD.open(pathname,FILE_WRITE);
       selected_file_open=1;
       break;
       
     case 0x03:  /* Existing file for read */
       DEBUG_PRINTLN("Existing for read");
-      selected_file = SD.open(filename,FILE_READ);
+      selected_file = SD.open(pathname,FILE_READ);
       selected_file_open=1;
       break;
     }
@@ -547,15 +632,19 @@ void rename_file() {
     normal_return(0x4A); // sector number error
     return;
   }
+  DEBUG_PRINTLN("New file does not exist");
 
   // There's no SD method for renaming a file.
   // So we open the new file, copy the data from the old file, then delete the old file
   
   File oldfile = SD.open(filename,FILE_READ);
+  DEBUG_PRINTLN("Open old file");
   File newfile = SD.open(newfile_name,FILE_WRITE);
-  
+  DEBUG_PRINTLN("Open new file");
+
   in = oldfile.read(data,200);
   while (in == 200) {
+    DEBUG_PRINTLN("Copying old to new");
     newfile.write(data,200);
     in = oldfile.read(data,200);
   }
@@ -566,7 +655,39 @@ void rename_file() {
   newfile.close();
   oldfile.close();
   
+  DEBUG_PRINTLN("Removing old");
   SD.remove(filename);
+  normal_return(0x00);
+}
+
+void boot_sequence() {
+  int in;
+  
+  DEBUG_PRINTLN("Booting...");
+  
+  File loader = SD.open("/RLOAD.BA",FILE_READ);
+  DEBUG_PRINTLN("Opened RLOAD.BA");
+  
+  // Read a block of data
+  in = loader.read(data,200);
+  while (in == 200) {
+    // Send it
+    
+    alt_send_data(data,200);
+    // Get another block
+    in = loader.read(data,200);
+  }
+  // If we have some extra data to send, send it
+  if (in > 0) {
+    alt_send_data(data,in);
+  }
+
+  // Tell the LOAD we are done
+  data[0] = 26; // control-Z
+  alt_send_data(data,1);
+  
+  loader.close();
+  DEBUG_PRINTLN("Boot complete");
 }
 
 void debugChar(unsigned char data_char) {
@@ -581,6 +702,8 @@ void debugChar(unsigned char data_char) {
 }
 
 void send_data(unsigned char return_type, unsigned char data[], int length) {
+  int x;
+  
   // We are ready to send
   DEBUG_PRINT("0x");
   mySerial.write(return_type);
@@ -592,6 +715,7 @@ void send_data(unsigned char return_type, unsigned char data[], int length) {
   DEBUG_PRINT1(length,HEX);
   DEBUG_PRINT("() ");
   
+  x =2;
   for(int i=0; i < length; i++) {
     mySerial.write(data[i]);
     DEBUG_PRINT("0x");
@@ -602,10 +726,18 @@ void send_data(unsigned char return_type, unsigned char data[], int length) {
       DEBUG_PRINT((char)data[i]);
     }
     DEBUG_PRINT(") ");
+    x++;
+    if (x > 9) {
+      DEBUG_PRINTLN(" ");
+      x = 0;
+    }
   }
 }
 
+#define DELAY_BETWEEN_LINES 500
 void alt_send_data(unsigned char data[], int length) {
+  int x;
+  x = 0;
   for(int i=0; i < length; i++) {
     mySerial.write(data[i]);
     DEBUG_PRINT("0x");
@@ -616,6 +748,15 @@ void alt_send_data(unsigned char data[], int length) {
       DEBUG_PRINT((char)data[i]);
     }
     DEBUG_PRINT(") ");
+    x++;
+    if (x > 9) {
+      DEBUG_PRINTLN(" ");
+      x = 0;
+    }
+
+    if (data[i] == 13) {
+      delay(DELAY_BETWEEN_LINES);
+    }
   }
 }
 

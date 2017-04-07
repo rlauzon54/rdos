@@ -18,12 +18,11 @@ The biggest pain was the RS-232 shifter.  RS-232 operates from 3.3V to 12V.  So 
 This shifter worked nice and did the hardware flow control cross over for me, so I could use a standard through 9-25 pin serial cable.  No Frankenstein cable.
 
 Arduino pins used:
-* 7 - Drive activity light
-* Digital ground - Drive activity light (gnd)
+* 7, Gnd - Drive activity light
+* A6, Gnd - Boot monentary switch
 * 62 (A8) - Shifter TX
 * 63 (A9) - Shifter RX
 * SPI header for SD shield
-* TBA button to "boot" RLOAD to the Tandy using LOAD "COM:98N1D
 
 Unavailable pins:
 * 10-13
@@ -43,7 +42,7 @@ Much of the code is based on a [DeskLink port to Linux](http://www.bitchin100.co
 The protocol is (reverse engineered) documented [here](http://bitchin100.com/wiki/index.php?title=TPDD_Base_Protocol)
 
 Commands supported:
-+ Type 00 - Directory Reference - Used by RLIST to list the files, and RSAVE/RLOAD to save and load files.  Options 3 and 4 - "request previous directory block", and "end directory reference" - are not be supported.
++ Type 00 - Directory Reference - Used by RLIST to list the files, and RSAVE/RLOAD to save and load files.  Options 3 and 4 - "request previous directory block", and "end directory reference" - are not be supported.  Option 3 was changed to be "change directory"
 + Type 01 - Open file - Used by RSAVE/RLOAD to save and load files
 + Type 02 - Close file - Used by RSAVE/RLOAD to save and load files
 + Type 03 - Read file - Used by RLOAD to load files
@@ -62,12 +61,17 @@ File name will NOT be forced to upper case on the Arduino side.
 Checksum will not be supported (since the communications is much better, it's no longer needed).
 
 Client programs:
-+ RLIST.BA - List the files in the current directory
-+ RLOAD.BA - Load the file into the Tandy
-+ RSAVE.BA - Save the file into the SD card
-+ RUTIL.BA - Delete/rename files - TBA
-+ RCWD.BA - Change/display current working directory - TBA
+* RLIST.BA - List the files in the current directory
+* RLOAD.BA - Load the file into the Tandy
+* RSAVE.BA - Save the file into the SD card
+* RUTIL.BA - Delete/rename files, change working directory
 
 Notes:
-In RSAVE, I only send 60 bytes of the file at a time.  The Tandy seems to not want to send more than that.
+* In RSAVE, I only send 60 bytes of the file at a time.  The Tandy seems to not want to send more than that.
+
+* Tandy BASIC does not permit you to open a .BA file for writing, so you can't load a tokenized BASIC program.  You can only load it as a .DO file and then do a LOAD "xxx.DO" in the BASIC interpreter.  Note that you can SAVE a .BA file, though.  So this project only works for data files, not binary program files.
+
+* Don't bother trying to save a file with any extension other than .DO.  You will get an "?MN Error".  Just leave the extension off for the Tandy file name and let it default to .DO.
+
+
 
