@@ -1,0 +1,61 @@
+10 REM Seek example for Ron Disk - untested
+20 MAXFILES = 4
+30 INPUT "What file to read from drive";F$
+40 IF LEN(F$) > 24 THEN PRINT "File name too long.":END
+50 gosub 701:gosub 720:gosub 800
+
+60 rem seek test
+70 l = 50
+80 gosub 900
+
+90 REM Read file
+100 R$="ZZ" +CHR$(3)+CHR$(0)
+110 PRINT #1,R$;
+120 C$=INPUT$(1,2)
+130 IF ASC(C$) <> 16 THEN PRINT "Invalid response code (read)":GOTO 390
+140 C$=INPUT$(1,2)
+150 L=ASC(C$)
+160 IF L = 0 then print "No data read": goto 390
+170 Q$=INPUT$(L,2)
+180 PRINT Q$;
+
+390 CLOSE #1:CLOSE #2:END
+
+600 rem get normal response
+605 C$=INPUT$(1,2)
+610 IF ASC(C$) <> 18 THEN PRINT "Invalid response code (open)":GOTO 390
+615 C$=INPUT$(1,2):C$=INPUT$(1,2)
+620 IF ASC(C$) <> 0 THEN PRINT "Error opening file:",ASC(C$):GOTO 390
+630 return
+
+700 rem Open com port
+701 OPEN "com:98N1D" FOR OUTPUT AS #1
+702 OPEN "com:98N1D" FOR INPUT AS #2
+703 return
+
+710 REM reference file
+720 R$="ZZ" +CHR$(0)+CHR$(26)+F$+SPACE$(24-LEN(F$))+"F"+CHR$(0)
+730 PRINT #1,R$;
+740 C$=INPUT$(1,2)
+750 IF ASC(C$) <> 17 THEN PRINT "Invalid response code (ref)":GOTO 390
+760 C$=INPUT$(1,2)
+770 L=ASC(C$)
+780 Q$=INPUT$(L,2)
+790 return
+
+800 REM open file for read
+805 R$="ZZ" +CHR$(1)+CHR$(1)+CHR$(3)
+810 PRINT #1,R$;
+815 gosub 605: return
+
+840 REM close file
+845 R$="ZZ" +CHR$(2)+CHR$(0)
+850 PRINT #1,R$;
+855 gosub 605: return
+
+900 rem seek into file
+910 l1=l%256:l2=(l-l1)/256
+920 R$="ZZ" +CHR$(0)+CHR$(6)+chr$(l1)+chr$(l2)
+930 print #1;r$;
+940 gosub 605: return
+

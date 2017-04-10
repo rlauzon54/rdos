@@ -48,7 +48,7 @@ Commands supported:
 + Type 03 - Read file - Used by RLOAD to load files
 + Type 04 - Write file - Used by RSAVE to save files
 + Type 05 - Delete file - Used by RMAN to delete files
-+ Type 06 - Format Disk - Unsupported
++ Type 06 - Format Disk - Changed to file seek
 + Type 07 - Drive Status - Unsupported
 + Type 08 - DME Req - Unsupported
 + Type 0C - Drive Condition - Unsupported
@@ -72,6 +72,17 @@ Notes:
 * Tandy BASIC does not permit you to open a .BA file for writing, so you can't load a tokenized BASIC program.  You can only load it as a .DO file and then do a LOAD "xxx.DO" in the BASIC interpreter.  Note that you can SAVE a .BA file, though.  So this project only works for data files, not binary program files.
 
 * Don't bother trying to save a file with any extension other than .DO.  You will get an "?MN Error".  Just leave the extension off for the Tandy file name and let it default to .DO.
+
+
+TBD:
+1. Test new file seek function.
+   + Reference file
+   + Open for read
+   + Seek to position
+   + Read
+   + Close
+   + Test for past end of file
+   + Test write after seek
 
 
 

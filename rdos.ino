@@ -229,6 +229,9 @@ void loop() {
       case 0x05:  /* Delete */
         delete_file();
         break;
+      case 0x06: /* Seek */
+        seek_file();
+        break;
       case 0x0D:  /* Rename File */
         rename_file();
         break;
@@ -606,11 +609,34 @@ void delete_file() {
   
   // If the file is open, remove it
   if (selected_file_open) selected_file.close();
-  
+
   // Remove the file
   SD.remove(filename);
   
   normal_return(0x00);
+}
+
+void seek_file() {
+  DEBUG_PRINTLN("Processing seek file");
+  unsigned long pos;
+  
+  // if the file is not open
+  if (!selected_file_open) {
+    normal_return(0x30); // no file name
+    return;
+  }
+
+  pos = data[0] + data[1]*256;
+  DEBUG_PRINT("Position:");
+  DEBUG_PRINTLN(pos);
+  
+  if (selected_file.seek(pos)) {
+    normal_return(0); // worked
+  }
+  else {
+    normal_return(0x4a); // Sector number error
+  }
+  
 }
 
 void rename_file() {
