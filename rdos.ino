@@ -232,6 +232,9 @@ void loop() {
       case 0x06: /* Seek */
         seek_file();
         break;
+      case 0x07: /* Read a record from file */
+        read_record_file();
+        break;
       case 0x0D:  /* Rename File */
         rename_file();
         break;
@@ -637,6 +640,39 @@ void seek_file() {
     normal_return(0x4a); // Sector number error
   }
   
+}
+
+void read_record_file() {
+  int len;
+
+  DEBUG_PRINTLN("Processing read record file");
+  
+  len = data[0];
+  DEBUG_PRINT("Record length:");
+  DEBUG_PRINTLN(len);
+
+  // return type 10
+  command_type=0x10;
+
+  // If the file is not open
+  if(! selected_file_open)
+  {
+    normal_return(0x30); // no file name error
+    return;
+  }
+
+  // If we didn't open the file for read
+  if(selected_file_mode!=3)
+  {
+    normal_return(0x37);  // open format mismatch
+    return;
+  }
+
+  // get the next len bytes from the file
+  length = selected_file.read(data, len);
+
+  // Calculate the check sum of the message
+  send_data(command_type, data, length);
 }
 
 void rename_file() {

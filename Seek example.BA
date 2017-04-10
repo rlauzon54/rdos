@@ -8,8 +8,8 @@
 70 l = 50
 80 gosub 900
 
-90 REM Read file
-100 R$="ZZ" +CHR$(3)+CHR$(0)
+90 REM Read 20 bytes from file
+100 R$="ZZ" +CHR$(7)+CHR$(1) + chr$(20)
 110 PRINT #1,R$;
 120 C$=INPUT$(1,2)
 130 IF ASC(C$) <> 16 THEN PRINT "Invalid response code (read)":GOTO 390
