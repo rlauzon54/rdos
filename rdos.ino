@@ -273,7 +273,7 @@ void process_directory_command() {
     case 0x03: /* Change directory */
         change_directory();
         break;
-        
+
     default:
         Serial.print("Unknown directory command:");
         Serial.println(search_form,HEX);
@@ -501,7 +501,7 @@ void open_file(int omode)
   strcat(pathname,filename);
 
   switch(omode) {
-    case 0x01:  /* New file for my_write */
+    case 0x01:  /* New file for write */
       DEBUG_PRINTLN("New file for write");
       
       // if the file exists, remove it
@@ -724,11 +724,23 @@ void rename_file() {
 
 void boot_sequence() {
   int in;
+  File loader;
   
   DEBUG_PRINTLN("Booting...");
   
-  File loader = SD.open("/RLOAD.BA",FILE_READ);
-  DEBUG_PRINTLN("Opened RLOAD.BA");
+  // If we haven't selected a file
+  if (selected_file_open == 0) {
+    // Use rload.ba
+    loader = SD.open("/RLOAD.BA",FILE_READ);
+    DEBUG_PRINTLN("Opened RLOAD.BA");
+  } else {
+    // Use the selected file
+    strcpy(pathname,cwd);
+    strcat(pathname,filename);
+    loader = SD.open(pathname,FILE_READ);
+    DEBUG_PRINT("Opened ");
+    DEBUG_PRINTLN(pathname);    
+  }
   
   // Read a block of data
   in = loader.read(data,200);

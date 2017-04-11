@@ -83,6 +83,9 @@ TBD:
    + Close
    + Test for past end of file
    + Test write after seek
+2. Test for boot program change function.
+   + If you reference a file, it becomes the "boot" program.  Pressing the button will send it down the serial port.
+   + If no file referenced, it defaults to "/RLOAD.BA".
 
 
 
