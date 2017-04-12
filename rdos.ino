@@ -34,7 +34,7 @@ int checksum;
 char cwd[255] = "/";
 
 char pathname[255];
-char filename[25];
+char filename[25] = "rload.ba";
 File selected_file;
 int selected_file_open;
 int selected_file_mode;
@@ -728,19 +728,12 @@ void boot_sequence() {
   
   DEBUG_PRINTLN("Booting...");
   
-  // If we haven't selected a file
-  if (selected_file_open == 0) {
-    // Use rload.ba
-    loader = SD.open("/RLOAD.BA",FILE_READ);
-    DEBUG_PRINTLN("Opened RLOAD.BA");
-  } else {
-    // Use the selected file
-    strcpy(pathname,cwd);
-    strcat(pathname,filename);
-    loader = SD.open(pathname,FILE_READ);
-    DEBUG_PRINT("Opened ");
-    DEBUG_PRINTLN(pathname);    
-  }
+  // Use the selected file
+  strcpy(pathname,cwd);
+  strcat(pathname,filename);
+  loader = SD.open(pathname,FILE_READ);
+  DEBUG_PRINT("Opened ");
+  DEBUG_PRINTLN(pathname);    
   
   // Read a block of data
   in = loader.read(data,200);

@@ -1,0 +1,16 @@
+10 REM rload - Reference a file from Ron Disk
+20 rem this will set the file to be loaded when you "boot" the Ron Disk
+30 MAXFILES = 2
+40 INPUT "What file to reference on drive";F$
+50 IF LEN(F$) > 24 THEN PRINT "File name too long.":END
+60 OPEN "com:98N1D" FOR OUTPUT AS #1
+70 OPEN "com:98N1D" FOR INPUT AS #2
+80 REM reference file
+90 R$="ZZ" +CHR$(0)+CHR$(26)+F$+SPACE$(24-LEN(F$))+"F"+CHR$(0)
+100 PRINT #1,R$;
+110 C$=INPUT$(1,2)
+120 IF ASC(C$) <> 17 THEN PRINT "Invalid response code (ref)":GOTO 150
+130 rem clear com buffer
+140 C$=INPUT$(1,2):L=ASC(C$):Q$=INPUT$(L,2)
+150 CLOSE #1:CLOSE #2:END
+

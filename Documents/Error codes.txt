@@ -1,0 +1,29 @@
+From http://bitchin100.com/wiki/index.php?title=TPDD_Base_Protocol
+Values converted from hex to decimal (which rdos displays).
+
+00 - normal (no error)
+16 - file does not exist
+17 - file exists
+48 - no filename
+49 - dir search error
+53 - bank error
+54 - parameter error
+55 - open format mismatch
+63 - end of file
+64 - no start mark
+65 - crc check error in ID
+66 - sector length error
+68 - format verify error
+70 - format interruption
+71 - erase offset error
+73 - crc check error in data
+74 - sector number error
+75 - read data timeout
+77 - sector number error
+80 - disk write protect
+94 - un-initilized disk
+96 - directory full
+97 - disk full
+110 - file too long
+112 - no disk
+113 - disk change error

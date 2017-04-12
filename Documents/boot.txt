@@ -1,0 +1,39 @@
+To boot RDOS
+
+1. On the Tandy, go into the BASIC interpreter and type
+LOAD "COM:98N1D
+and press enter.
+Then press the button on the RDOS drive.
+
+This will load the RLOAD.BA program from the RDOS drive.
+
+Once loaded, type
+SAVE "RLOAD
+
+2. Optionally, load the other RDOS programs by running RLOAD.
+The files on the RDOS drive are:
+RSAVE.BA - Allows you to save files to the RDOS drive
+RLIST.BA - Allows you to list the files on the RDOS drive
+RUTIL.BA - Allows you to rename/delete files, change working directory on the RDOS drive.
+
+You only need to load the programs you want.  If you don't care about renaming/deleting files, you don't have to load RUTIL, for example.
+
+They will be loaded as .DO files.  So, you would do
+LOAD "Rxxx.DO
+then
+SAVE "Rxxx
+KILL "Rxxx.DO
+
+Example run:
+What file to get from drive? RSAVE.BA
+What to name it on the Tandy? RSAVE
+
+LOAD "RSAVE.DO
+SAVE "RSAVE
+KILL "RSAVE.DO
+
+
+
+If you run the REF.BA program, you can temporarily change the program that is transferred on boot.
+Powering off the Ron Disk will reset the file back to RLOAD.BA.
+
