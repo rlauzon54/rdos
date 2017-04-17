@@ -323,7 +323,7 @@ void get_first_directory_entry() {
     selected_file_open = 0;
   }
   
-  // Open the root directory of the card
+  // Open the current working directory of the card
   selected_file = SD.open(cwd);
   selected_file_open = 1;
   selected_file.rewindDirectory();
@@ -613,8 +613,11 @@ void delete_file() {
   // If the file is open, remove it
   if (selected_file_open) selected_file.close();
 
+  strcpy(pathname,cwd);
+  strcat(pathname,filename);
+
   // Remove the file
-  SD.remove(filename);
+  SD.remove(pathname);
   
   normal_return(0x00);
 }
@@ -679,7 +682,7 @@ void rename_file() {
   DEBUG_PRINTLN("Processing file rename command");
   char newfile_name[24];
   int in;
-  
+
   // Get the new file name from the input
   memcpy(newfile_name,data,24);
   newfile_name[24]=0;
@@ -689,8 +692,11 @@ void rename_file() {
     newfile_name[i] = 0;
   }
 
+  strcpy(pathname,cwd);
+  strcat(pathname,newfile_name);
+
   // You can't rename a file to something that's already there
-  if (SD.exists(newfile_name)) {
+  if (SD.exists(pathname)) {
     normal_return(0x4A); // sector number error
     return;
   }
@@ -699,9 +705,14 @@ void rename_file() {
   // There's no SD method for renaming a file.
   // So we open the new file, copy the data from the old file, then delete the old file
   
-  File oldfile = SD.open(filename,FILE_READ);
+  strcpy(pathname,cwd);
+  strcat(pathname,filename);
+  File oldfile = SD.open(pathname,FILE_READ);
   DEBUG_PRINTLN("Open old file");
-  File newfile = SD.open(newfile_name,FILE_WRITE);
+
+  strcpy(pathname,cwd);
+  strcat(pathname,newfile_name);
+  File newfile = SD.open(pathname,FILE_WRITE);
   DEBUG_PRINTLN("Open new file");
 
   in = oldfile.read(data,200);
@@ -718,7 +729,9 @@ void rename_file() {
   oldfile.close();
   
   DEBUG_PRINTLN("Removing old");
-  SD.remove(filename);
+  strcpy(pathname,cwd);
+  strcat(pathname,filename);
+  SD.remove(pathname);
   normal_return(0x00);
 }
 
